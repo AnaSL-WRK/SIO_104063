@@ -138,6 +138,7 @@ def main():
     #key = None
     #mode = "ecb"
 
+    #o git ta maluco
 
     encrypt(nameIn, nameOut, alg, key, mode)
     
