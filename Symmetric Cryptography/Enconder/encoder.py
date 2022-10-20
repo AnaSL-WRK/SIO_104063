@@ -60,8 +60,6 @@ def encrypt(nameIn,nameOut,alg,key,mode):
 
     
 
-
-    
     nonce = os.urandom(16) #does chacha need this or is it the same as iv
     iv = secrets.token_bytes(16)
     fileOut.write(iv)                       #passing iv as first 16 bytes of the file for later decryption
@@ -73,6 +71,16 @@ def encrypt(nameIn,nameOut,alg,key,mode):
                                                         #The nonce does not need to be kept secret and may be included with the ciphertext. 
                                                         #This must be 128 bits in length. The 128-bit value is a concatenation of 4-byte
                                                         #little-endian counter and the 12-byte nonce 
+
+
+    try:
+        encModes = open("algorithm.txt", 'x')
+    except FileExistsError:
+        encModes = open("algorithm.txt", 'w')
+
+    encModes.write(alg + "\n" + mode)
+
+
     if alg == "chacha20":
             algorithm = algorithms.ChaCha20(key, iv)
             cipher = Cipher(algorithm, mode=None)
@@ -86,6 +94,12 @@ def encrypt(nameIn,nameOut,alg,key,mode):
                 cipher = Cipher(algorithms.AES(key),modes.ECB())
             elif mode == "cbc":
                 cipher = Cipher(algorithms.AES(key),modes.CBC(iv))
+            else:
+                 print ("Invalid mode, please try another one")
+                 exit
+    else:
+        print ("Invalid algorithm, please try another one")
+        exit
 
 
                                          
@@ -114,29 +128,29 @@ def encrypt(nameIn,nameOut,alg,key,mode):
 
 def main():   
 
-    nameIn, nameOut, alg = input("Write what file to encrypt, where you want the output and the algorythm to use (chacha20 or aes) \n").split()
-    
-    ans = input("do you have a key? [Y/N] ")
-    ans = ans.lower()
+  #nameIn, nameOut, alg = input("Write what file to encrypt, where you want the output and the algorythm to use (chacha20 or aes) \n").split()
+  #
+  #ans = input("do you have a key? [Y/N] ")
+  #ans = ans.lower()
 
-    if ans == "y":
-        key = input("paste your key here \n")
-    else:
-        key = None
+  #if ans == "y":
+  #    key = input("paste your key here \n")
+  #else:
+  #    key = None
 
-    if alg == "aes":
-        mode = input("What mode do you want? (CFB(default), OBF, ECB, CBC) \n" )
-        if mode == None:
-            mode == None
-    else: 
-        mode == None
+  #if alg == "aes":
+  #    mode = input("What mode do you want? (CFB(default), OBF, ECB, CBC) \n" )
+  #    if mode == None:
+  #        mode == None
+  #else: 
+  #    mode == None
 
     #testing
-    #nameIn = "text.txt"
-    #nameOut = "output.txt"
-    #alg = "aes"
-    #key = None
-    #mode = "ecb"
+    nameIn = "text.txt"
+    nameOut = "encoded.txt"
+    alg = "aes"
+    key = None
+    mode = "ecb"
 
     #o git ta maluco
 
