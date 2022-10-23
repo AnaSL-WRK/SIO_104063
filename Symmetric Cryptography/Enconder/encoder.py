@@ -25,7 +25,7 @@ def makeKey(key, alg=None):
         file = open('key.key', 'wb')
 
     file.write(key)                 #type bytes
-    file.close
+    file.close()
 
     
    
@@ -47,7 +47,7 @@ def encrypt(nameIn,nameOut,alg,key,mode):
     file = open('key.key', 'rb')
 
     key = file.read()
-    file.close
+    file.close()
 
     fileInput = open(nameIn, 'rb')
     FileIn = fileInput.read()
@@ -60,11 +60,13 @@ def encrypt(nameIn,nameOut,alg,key,mode):
 
     
 
-    nonce = os.urandom(16) #does chacha need this or is it the same as iv
+    nonce = os.urandom(16) #does chacha need this or is it the same as iv?
     iv = secrets.token_bytes(16)
     fileOut.write(iv)                       #passing iv as first 16 bytes of the file for later decryption
-    fileOut.close          
-   
+    fileOut.close()       
+
+    stats = os.stat(nameOut)
+    print(stats.st_size)
                                                         #Should be unique, a nonce. It is critical to never 
                                                         #reuse a nonce with a given key. Any reuse of a nonce with the same 
                                                         #key compromises the security of every message encrypted with that key.
@@ -116,9 +118,26 @@ def encrypt(nameIn,nameOut,alg,key,mode):
     print("IV: " + ivExp + " appended to file")
 
 
-    fileOut = open(nameOut, 'ab')
-    fileOut.write(ct)              
+    fileOut = open(nameOut, 'ab+')
+    fileOut.write(ct)
+    print(ct)        
+
+    old_file_position = fileOut.tell()
+
+    # Moving the file handle to the end of the file
+    fileOut.seek(0, 2)
+
+    # calculates the bytes 
+    size = fileOut.tell()
+    print('file size is', size, 'bytes')
+    fileOut.seek(old_file_position, 0)
+
+
+
+
+    
     fileOut.close
+
     
   # decryptor = cipher.decryptor()
   # out = decryptor.update(ct)

@@ -35,18 +35,16 @@ def decrypt(nameIn,nameOut,key,iv,encMode):
    #         file2.write(file1.read()[16:])
    #         file.close()
 #
-    file16f = open( nameIn, 'br+')
-    file16f.seek(16,0)
-    print(file16f.tell())
-    encFile = file16f.read()
-    
-    #print(os.path.getsize(nameIn))
+    file = open( nameIn, 'br')
+    file.seek(16)
+    encFile = file.read()
 
 
     if alg == "chacha20":
             algorithm = algorithms.ChaCha20(key, iv)
             cipher = Cipher(algorithm, mode=None)
     elif alg == "aes":
+            algorithm = algorithms.AES(key)
             if  mode == "cfb":
                 cipher = Cipher(algorithms.AES(key),modes.CFB(iv))
             elif mode == "obf":
@@ -69,15 +67,14 @@ def decrypt(nameIn,nameOut,key,iv,encMode):
     #padded_data = padder.update(ct)                                      
     #ct = decryptor.update(padded_data)
     
-    out = decryptor.update(encFile)
-    file16f.close()
+    out = decryptor.update(encFile) + decryptor.finalize()
+    print(out)
 
-    fileOut = open(nameOut, 'wb+')
+
+    #fileOut = open(nameOut, 'w')
     #msg = out.decode('latin-1')
-    
-    fileOut.write(out)  
-    print(fileOut.tell())            
-    fileOut.close
+    #fileOut.write(msg)              
+    #fileOut.close
 
 
 
