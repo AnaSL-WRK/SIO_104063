@@ -1,14 +1,13 @@
 
 ###not done
 
+import os
+import secrets
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from msilib.schema import File
 from tokenize import String
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import padding
-import sys
-import os
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding
 
 
 
@@ -20,12 +19,8 @@ def decrypt(nameIn,nameOut,key,iv,encMode):
     if iv != None:
         ivRead = open(nameIn, "br") # opening for [r]eading as [b]inary
         iv = ivRead.read(16) # if you only wanted to read 512 bytes, do .read(512)
-        
-        #ivRead.close()
-    #else
 
     file = open(encMode, "r")
-    #alg = file.readline().rstrip()
     file = file.read()
     alg = file.split('\n', 1)[0]
     mode = file.split('\n', 1)[1]
@@ -34,12 +29,16 @@ def decrypt(nameIn,nameOut,key,iv,encMode):
    #     with open(nameIn, 'wb') as file2:
    #         file2.write(file1.read()[16:])
    #         file.close()
-#
-    file16f = open( nameIn, 'br+')
-    file16f.seek(16,0)
-    print(file16f.tell())
-    encFile = file16f.read()
-    
+
+
+    encFile = open(nameIn, "rb+")
+    encodedTxt = encFile.read()
+
+    #data = file[16:]
+    #encOut.seek(16,0) #<-- AttributeError: 'bytes' object has no attribute 'seek'
+    #print(encOut.tell())
+    #print(encOut)          
+
     #print(os.path.getsize(nameIn))
 
 
@@ -62,56 +61,53 @@ def decrypt(nameIn,nameOut,key,iv,encMode):
         print ("Invalid algorithm, please append the correct one")
         exit
 
-
-   # padder = padding.PKCS7(128).padder() 
     decryptor = cipher.decryptor()
-    #ct = decryptor.update(encFile)
-    #padded_data = padder.update(ct)                                      
-    #ct = decryptor.update(padded_data)
+
+
+    unpadder = padding.PKCS7(128).unpadder()
+
     
-    out = decryptor.update(encFile)
-    file16f.close()
+    dec = decryptor.update(encodedTxt) + decryptor.finalize()
+
+    unpadded_data = unpadder.update(dec) + unpadder.finalize()
+
+
 
     fileOut = open(nameOut, 'wb+')
-    #msg = out.decode('latin-1')
-    
-    fileOut.write(out)  
-    print(fileOut.tell())            
+    fileOut.write(unpadded_data)  
     fileOut.close
-
-
 
 
 
 def main():   
 
-   # nameIn, nameOut, key = input("Write what file to decrypt, where you want the output and the key to decrypt \n").split()
-   # 
-   # ans = input("do you have the Iv? [Y/N] ")
-   # ans = ans.lower()
+    nameIn, nameOut, key = input("Write what file to decrypt, where you want the output and the key to decrypt \n").split()
+    
+    ans = input("do you have the Iv? [Y/N] ")
+    ans = ans.lower()
 #
-   # if ans == "y":
-   #     iv = input("Paste the Iv string here  \n")
-   # else:
-   #     iv = None
+    if ans == "y":
+        iv = input("Paste the Iv string here  \n")
+    else:
+        iv = None
 #
-   # ans = input("Do you have the encryption mode? [Y/N] ")
-   # ans = ans.lower()
+    ans = input("Do you have the encryption mode? [Y/N] ")
+    ans = ans.lower()
 #
-   # if ans == "y":
-   #     encMode = input("In what file do you have that information ")
-   # else: 
-   #     print("You need to know the encoding algorithm and mode in order to decode")
+    if ans == "y":
+        encMode = input("In what file do you have that information ")
+    else: 
+        print("You need to know the encoding algorithm and mode in order to decode")
 #
 
 
 
     #testing
-    nameIn = "encoded.txt"
-    nameOut = "decrypted.txt"
-    key = "key.key"
-    iv = "y"
-    encMode = "algorithm.txt"
+    #nameIn = "encoded.txt"
+    #nameOut = "decrypted.txt"
+    #key = "key.key"
+    #iv = "y"
+    #encMode = "algorithm.txt"
 
     decrypt(nameIn, nameOut, key, iv, encMode)
     

@@ -1,9 +1,10 @@
+from msilib.schema import File
 import secrets
 from cryptography.fernet import Fernet
 import os
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
-
+import base64
 
 def makeKey(key, alg=None):
  
@@ -50,7 +51,7 @@ def encrypt(nameIn,nameOut,alg,key,mode):
     file.close()
 
     fileInput = open(nameIn, 'rb')
-    FileIn = fileInput.read()
+    msg = fileInput.read()
 
 
     try:
@@ -60,19 +61,13 @@ def encrypt(nameIn,nameOut,alg,key,mode):
 
     
 
-    nonce = os.urandom(16) #does chacha need this or is it the same as iv?
     iv = secrets.token_bytes(16)
-    fileOut.write(iv)                       #passing iv as first 16 bytes of the file for later decryption
-    fileOut.close()       
+   # fileOut.write(iv)                       #passing iv as first 16 bytes of the file for later decryption
+   # fileOut.close()       
 
-    stats = os.stat(nameOut)
-    print(stats.st_size)
-                                                        #Should be unique, a nonce. It is critical to never 
-                                                        #reuse a nonce with a given key. Any reuse of a nonce with the same 
-                                                        #key compromises the security of every message encrypted with that key.
-                                                        #The nonce does not need to be kept secret and may be included with the ciphertext. 
-                                                        #This must be 128 bits in length. The 128-bit value is a concatenation of 4-byte
-                                                        #little-endian counter and the 12-byte nonce 
+
+
+
 
 
     try:
@@ -81,6 +76,11 @@ def encrypt(nameIn,nameOut,alg,key,mode):
         encModes = open("algorithm.txt", 'w')
 
     encModes.write(alg + "\n" + mode)
+
+
+
+
+
 
 
     if alg == "chacha20":
@@ -104,45 +104,29 @@ def encrypt(nameIn,nameOut,alg,key,mode):
         exit
 
 
-                                         
-    encryptor = cipher.encryptor()    
 
+
+
+
+
+    encryptor = cipher.encryptor()    
 
     padder = padding.PKCS7(128).padder() 
    
-    ct = encryptor.update(FileIn) #+ encryptor.finalize()
-    padded_data = padder.update(ct)                                      
-    ct = encryptor.update(padded_data)
-                                          
+    padded_data = padder.update(msg) + padder.finalize()                                 
+    ct = encryptor.update(padded_data) + encryptor.finalize()
+    print(ct)
+
+
     ivExp = iv.decode('latin-1') 
     print("IV: " + ivExp + " appended to file")
 
 
     fileOut = open(nameOut, 'ab+')
+   # base64_bytes = base64.b64encode(ct)
+    #b64msg = base64_bytes.decode('ascii')
     fileOut.write(ct)
-    print(ct)        
-
-    old_file_position = fileOut.tell()
-
-    # Moving the file handle to the end of the file
-    fileOut.seek(0, 2)
-
-    # calculates the bytes 
-    size = fileOut.tell()
-    print('file size is', size, 'bytes')
-    fileOut.seek(old_file_position, 0)
-
-
-
-
-    
-    fileOut.close
-
-    
-  # decryptor = cipher.decryptor()
-  # out = decryptor.update(ct)
-  # print(out)
-
+        
 
 
 def main():   
