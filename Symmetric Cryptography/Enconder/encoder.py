@@ -1,10 +1,9 @@
-from msilib.schema import File
 import secrets
 from cryptography.fernet import Fernet
-import os
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
-import base64
+
+
 
 def makeKey(key, alg=None):
  
@@ -14,7 +13,6 @@ def makeKey(key, alg=None):
         key = bytes(key,'utf-8')
        
    
-    ## diff algs need diff key lengths
     if alg == "chacha20":
         key = key[:32]
     elif alg == "aes":
@@ -39,11 +37,29 @@ def encrypt(nameIn,nameOut,alg,key,mode):
     alg = alg.lower()
     
 
-    if mode == None:
-        mode == "cfb"
 
-    mode = mode.lower()
-    
+
+
+    try:
+        encModes = open("algorithm.txt", 'x')
+    except FileExistsError:
+        encModes = open("algorithm.txt", 'w')
+
+
+    if alg == "aes":
+        if mode == None:
+            mode == "cfb"
+        else: 
+            mode = mode.lower()
+        encModes.write(alg + "\n" + mode)
+    else:
+         encModes.write(alg)
+
+
+
+
+
+
     makeKey(key,alg)
     file = open('key.key', 'rb')
 
@@ -64,23 +80,6 @@ def encrypt(nameIn,nameOut,alg,key,mode):
     iv = secrets.token_bytes(16)
    # fileOut.write(iv)                       #passing iv as first 16 bytes of the file for later decryption
    # fileOut.close()       
-
-
-
-
-
-
-    try:
-        encModes = open("algorithm.txt", 'x')
-    except FileExistsError:
-        encModes = open("algorithm.txt", 'w')
-
-    encModes.write(alg + "\n" + mode)
-
-
-
-
-
 
 
     if alg == "chacha20":
@@ -115,7 +114,6 @@ def encrypt(nameIn,nameOut,alg,key,mode):
    
     padded_data = padder.update(msg) + padder.finalize()                                 
     ct = encryptor.update(padded_data) + encryptor.finalize()
-    print(ct)
 
 
     ivExp = iv.decode('latin-1') 
@@ -123,8 +121,6 @@ def encrypt(nameIn,nameOut,alg,key,mode):
 
 
     fileOut = open(nameOut, 'ab+')
-   # base64_bytes = base64.b64encode(ct)
-    #b64msg = base64_bytes.decode('ascii')
     fileOut.write(ct)
         
 

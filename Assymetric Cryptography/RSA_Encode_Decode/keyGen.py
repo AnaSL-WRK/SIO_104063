@@ -11,7 +11,7 @@ def keyGen(namePub,namePriv,size):
 
 
     pemPriv = key.private_bytes(encoding=serialization.Encoding.PEM,format=serialization.PrivateFormat.TraditionalOpenSSL,encryption_algorithm=serialization.NoEncryption())
-
+                                                                                                        #PKCS8
     #privK = pemPriv.splitlines()[0]
     writeToFile(namePriv,pemPriv)
 
@@ -48,15 +48,12 @@ def main():
   #      print("1024, 2048, 3072, 4096")
   #      exit(1)
     #testing
-    namepub = "keypub.pem"
-    namepriv = "keypriv.pem"
+    namePub = "keypub.pem"
+    namePriv = "keypriv.pem"
     size = 2048
 
-    
+    keyGen(namePub,namePriv,size)
 
-    keyGen(namepub,namepriv,size)
-    
-    
 if __name__ == main():
     main()
 

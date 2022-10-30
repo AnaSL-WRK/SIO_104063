@@ -1,29 +1,17 @@
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
 
 
-def encrypt(nameFileIn, nameFileOut, keyFile):
+def encrypt(nameFileIn, nameFileOut, key):
 
-    msg = readFile(nameFileIn, 'r')
-    key = readFile(keyFile, 'b')
+    msg = readFile(nameFileIn, 'br')
 
-
-    ciphertext = key.encrypt(msg,
-    padding.OAEP(
-        mgf=padding.MGF1(algorithm=hashes.SHA256()),
-        algorithm=hashes.SHA256(),
-        label=None
-    )
-)
+    encrypted = key.encrypt(msg,padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),algorithm=hashes.SHA256(),label=None))
     
+    writeToFile(nameFileOut,encrypted)
 
-
-
-
-
-
-
-
+    
 
 
 
@@ -46,6 +34,17 @@ def writeToFile(nameFile,content):
 
 
 
+def keyLoad(keyFile):
+
+    with open(keyFile, "rb") as key_file:
+        publicKey= serialization.load_pem_public_key(key_file.read())
+      
+    return publicKey
+
+
+
+
+
 
 def main():   
 
@@ -55,12 +54,12 @@ def main():
 
     #testing
     nameFileIn = "text.txt"
-    nameFileOut = "textEncoded.txt"
+    nameFileOut = "textEncodedv2.txt"
     keyFile = "keypub.pem"
 
     
-
-    encrypt(nameFileIn, nameFileOut, keyFile)
+    public_key = keyLoad(keyFile)
+    encrypt(nameFileIn, nameFileOut, public_key)
     
     
 if __name__ == main():

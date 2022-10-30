@@ -1,14 +1,14 @@
 
-from msilib.schema import File
+import io
 import secrets
 from cryptography.fernet import Fernet
 import os
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from PIL import Image
-from PIL import BmpImagePlugin
 from cryptography.hazmat.primitives import padding
-import numpy as np
-from cryptography.hazmat.backends import default_backend
+
+
+
 
 def makeKey(key, alg=None):
  
@@ -17,7 +17,7 @@ def makeKey(key, alg=None):
     else:
         key = bytes(key,'utf-8')
 
-    ## diff algs need diff key lengths
+
     if alg == "chacha20":
         key = key[:32]
     elif alg == "aes":
@@ -31,56 +31,71 @@ def makeKey(key, alg=None):
     file.write(key)                 #type bytes
     file.close
 
+
+
     
-   
-   
-   
-   
-def encrypt(nameIn,nameOut,alg,key,mode):
-    
+def exportAlgorithm(alg,mode):
+
     alg = alg.lower()
 
-    if mode == None:
-        mode == "cfb"
+    try:
+        encModes = open("algorithm.txt", 'x')
+    except FileExistsError:
+        encModes = open("algorithm.txt", 'w')
 
-    mode = mode.lower()
+    if alg == "aes":
+        if mode == None:
+            mode == "cfb"
+        else: 
+            mode = mode.lower()
+            encModes.write(alg + "\n" + mode)
+    else:
+        encModes.write(alg)
+   
+
+###############this conversion is bad!
+def bmpData(nameIn):
+
+    try:
+        file=Image.open(nameIn)
+        file.save("ImageIn.bmp")
+
+        file = open(nameIn, "rb")
+        FileIn = file.read()
+
     
+    except IOError:
+        file = open(nameIn, 'rb')          
+        FileIn = file.read()
+
+    file.close()
+    return FileIn
+
+
+def encrypt(nameIn,nameOut,alg,key,mode):
+    
+    
+    exportAlgorithm(alg,mode)
+
     makeKey(key,alg)
     file = open('key.key', 'rb')
-
     key = file.read()
     file.close
 
 
-    try:
-        img=Image.open(nameIn)
-        Imgsave = img.save("frangos.bmp")
-        #temp = img.convert(mode ="1")
-        #FileIn = temp.tobitmap()
-        FileIn = img.tobytes("hex","rgb")
-        
+    DataIn = bmpData(nameIn)
 
-    except IOError:
-        file = open(nameIn, 'rb')          
-        FileIn = file.read()
-    
-    
+
     nonce = os.urandom(16)
     iv = secrets.token_bytes(16)
-   
-                                                        #Should be unique, a nonce. It is critical to never 
-                                                        #reuse a nonce with a given key. Any reuse of a nonce with the same 
-                                                        #key compromises the security of every message encrypted with that key.
-                                                        #The nonce does not need to be kept secret and may be included with the ciphertext. 
-                                                        #This must be 128 bits in length. The 128-bit value is a concatenation of 4-byte
-                                                        #little-endian counter and the 12-byte nonce 
-                                                        #little-endian counter and the 12-byte nonce 
+
+
     if alg == "chacha20":
             algorithm = algorithms.ChaCha20(key, nonce)
             cipher = Cipher(algorithm, mode=None)
     elif alg == "aes":
             if  mode == "cfb":
-                cipher = Cipher(algorithms.AES(key),modes.CFB(iv), default_backend())
+                cipher = Cipher(algorithms.AES(key),modes.CFB(iv))
             elif mode == "obf":
                 cipher = Cipher(algorithms.AES(key),modes.OFB(iv))
             elif mode == "ecb":
@@ -89,49 +104,52 @@ def encrypt(nameIn,nameOut,alg,key,mode):
                 cipher = Cipher(algorithms.AES(key),modes.CBC(iv))
 
 
-                                         
-    encryptor = cipher.encryptor()    
+                                    
 
+    encryptor = cipher.encryptor()    
 
     padder = padding.PKCS7(128).padder() 
    
-    ct = encryptor.update(FileIn) 
-    padded_data = padder.update(ct)                                      
-    ct = encryptor.update(padded_data)
+    padded_data = padder.update(DataIn) + padder.finalize()                                 
+    ct = encryptor.update(padded_data) + encryptor.finalize()
 
- 
+    #image = Image.open(nameIn)
+    #output_image = Image.new(image.mode, image.size)
 
-    output_image = img.copy()
-    output_image.frombytes(ct)
-    output_image.save(nameOut)
+   #output_image.save(nameOut)
+    #stream = io.BytesIO(ct)
+    #image = Image.open(stream)
+    #image.show()
+    output = open(nameOut, "wb")
+    output.write(ct)
+    
 
-
-
+    
 
 def main():   
 
-    nameIn, nameOut, alg = input("Write what file to encrypt, where you want the output and the algorythm to use (chacha20 or aes) \n").split()
-    
-    ans = input("do you have a key? [Y/N] ")
-    ans = ans.lower()
+   #nameIn, nameOut, alg = input("Write what file to encrypt, where you want the output and the algorythm to use (chacha20 or aes) \n").split()
+   #
+   #ans = input("do you have a key? [Y/N] ")
+   #ans = ans.lower()
 
-    if ans == "y":
-        key = input("paste your key here \n")
-    else:
-        key = None
+   #if ans == "y":
+   #    key = input("paste your key here \n")
+   #else:
+   #    key = None
 
-    if alg == "aes":
-        mode = input("What mode do you want? (CFB(default), OBF, ECB, CBC) \n" )
-        if mode == None:
-            mode == None
+   #if alg == "aes":
+   #    mode = input("What mode do you want? (CFB(default), OBF, ECB, CBC) \n" )
+   #    if mode == None:
+   #        mode == None
 
 
     #testing
-    #nameIn = "Totoro.jpg"
-    #nameOut = "ecb.bmp"
-    #alg = "aes"
-    #key = None
-    #mode = "ecb"
+    nameIn = "tux.bmp"
+    nameOut = "ecbTux.bmp"
+    alg = "aes"
+    key = None
+    mode = "ecb"
 
 
 
